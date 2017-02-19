@@ -1,0 +1,118 @@
+Simint
+----------------------------------------------------
+Horizontally-vectorized electron repulsion integrals
+
+
+----------
+WARNING
+----------
+This is still a somewhat experimental library.
+I've validated it as much as possible, but there still may be bugs. In addition,
+the API may change in the future.
+
+----------
+WARNING 2
+----------
+This currently supports only up to (g g | g g) integrals.
+Any permutation of angular momentum *is* supported
+
+
+-------------
+Requirements
+-------------
+
+Compiler:
+  Intel Compiler v15 or above
+  GCC v4.9 or above
+
+CMake 3.0.2 or above
+Intel CPU (may work on others, but not tested)
+
+
+---------------------------
+Configuring
+---------------------------
+
+Configuration and building is done via CMake (www.cmake.org).
+Generally, from within the extracted directory:
+
+    mkdir build; cd build
+    CC=icc CXX=icpc cmake (...other options...)  ../
+
+Most importantly, you need to select which feature set to compile with.
+This is done with the SIMINT_VECTOR variable
+
+    -DSIMINT_VECTOR=scalar
+         ONLY FOR USE WITH simint-scalar (and only useful for benchmarks)
+
+    -DSIMINT_VECTOR=sse
+         Intel CPUs with SSSE3 support
+           * Basically any CPU make in the last 10 years
+
+    -DSIMINT_VECTOR=avx
+         Intel CPUs with AVX support
+           * Sandy Bridge (not tested)
+           * Ivy Bridge
+           * Haswell (if you want)
+
+    -DSIMINT_VECTOR=avxfma
+         Intel CPUs with AVX and FMA support
+           * Haswell
+
+    -DSIMINT_VECTOR=micavx512
+         Intel KNL (experimental)
+
+Other options: 
+
+    -DSIMINT_BUILD_SHARED:Bool=True
+         Build shared library, rather than a static library (default is static library)
+
+
+    -DSIMINT_C_FLAGS="flag1;flag2"
+    -DSIMINT_TESTS_CXX_FLAGS="flag1;flag2"
+
+         Additional flags to pass to Simint and the testing features, respectively.
+         The flags are separated by semicolon. For example,
+            -DSIMINT_C_FLAGS="-no-vec;-no-simd"           disable compiler-generated vectorization
+            -DSIMINT_TESTS_CXX_FLAGS="-no-vec;-no-simd"   disable compiler-generated vectorization
+   
+
+---------------------------
+Building
+---------------------------
+
+make and make install, as usual
+
+
+---------------------------
+Tests
+---------------------------
+
+Can run tests from the build directory. See tests/dat for available
+molecules and basis sets.
+
+
+    OMP_NUM_THREADS=1 test_eri           - Validate accuracy
+    OMP_NUM_THREADS=1 benchmark_eri      - Benchmark simint 
+
+You can of course change the number of threads to whatever you want. By default,
+it will use all available threads/cores.
+
+Examples (run from the build directory):
+
+    OMP_NUM_THREADS=4 test/test_eri ../test/dat/H2O.STO-3G.mol
+    OMP_NUM_THREADS=4 test/test_eri ../test/dat/ETHANE.AUG-CC-PVTZ.mol
+    OMP_NUM_THREADS=4 test/benchmark_eri ../test/dat/C6H6.ANO.mol
+
+
+
+---------------------------
+Code examples
+---------------------------
+
+Some simple examples of using the library are in the "examples" subdirectory.
+They are built by default.
+
+    examples/example1
+
+
