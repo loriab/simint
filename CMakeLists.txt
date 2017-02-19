@@ -15,11 +15,13 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 ##################################################
 set(SIMINT_VECTOR  "" CACHE BOOL "Type of vectorization to use")
 
+option(BUILD_SHARED_LIBS "Build final library as shared, not static" OFF)
 option(BUILD_FPIC "Libraries will be compiled with position independent code" ON)
 if(${BUILD_SHARED_LIBS} AND NOT ${BUILD_FPIC})
     message(FATAL_ERROR "BUILD_SHARED_LIBS ON and BUILD_FPIC OFF are incompatible, as shared library requires position independent code")
 endif()
 option(ENABLE_GENERIC "Enable mostly static linking in shared library" OFF)
+option(ENABLE_TESTS "Enable simint unit tests" ON)
 
 ##################################################
 # Basic options for simint
@@ -81,7 +83,12 @@ install(EXPORT "${PN}Targets"
 add_subdirectory(simint)
 
 # Make the test executables
-add_subdirectory(test)
+if(ENABLE_TESTS)
+    add_subdirectory(test)
+endif()
 
 # Build examples
 add_subdirectory(examples)
+
+# Note: Building tests with shared library requires -liomp5 or -lgomp
+#   added to CMAKE_CXX_FLAGS
