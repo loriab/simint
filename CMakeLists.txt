@@ -1,12 +1,25 @@
+cmake_policy(SET CMP0048 NEW)  # project_VERSION* variables populated from project(... VERSION x.x.x) string
+project(simint
+        VERSION 0.7
+        LANGUAGES C CXX)
+set(simint_AUTHORS      "Benjamin P. Pritchard")
+set(simint_DESCRIPTION  "Vectorized implementation of Obara-Saika Method toward Electron Repulsion Integrals")
+set(simint_URL          "http://www.bennyp.org/research/simint/")
+set(simint_LICENSE      "BSD 3-clause")
+
 cmake_minimum_required(VERSION 3.0.2)
-project(simint C)
-enable_language(CXX)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ##################################################
 # Flags passed in
 ##################################################
 set(SIMINT_VECTOR  "" CACHE BOOL "Type of vectorization to use")
 
+option(BUILD_FPIC "Libraries will be compiled with position independent code" ON)
+if(${BUILD_SHARED_LIBS} AND NOT ${BUILD_FPIC})
+    message(FATAL_ERROR "BUILD_SHARED_LIBS ON and BUILD_FPIC OFF are incompatible, as shared library requires position independent code")
+endif()
+option(ENABLE_GENERIC "Enable mostly static linking in shared library" OFF)
 
 ##################################################
 # Basic options for simint
@@ -28,11 +41,6 @@ message(STATUS "    SIMINT_C_INCLUDES: ${SIMINT_C_INCLUDES}")
 message(STATUS "       SIMINT_C_FLAGS: ${SIMINT_C_FLAGS}")
 message(STATUS "  SIMINT_C_LINK_FLAGS: ${SIMINT_C_LINK_FLAGS}")
 
-
-# Install the config file
-configure_file("simintConfig.cmake.in" "simintConfig.cmake" @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/simintConfig.cmake DESTINATION share/cmake/simint)
-
 # Configure & install the vector_config header
 configure_file("simint/vectorization/vector_config.h.in"
                "${CMAKE_BINARY_DIR}/stage/simint/vectorization/vector_config.h"
@@ -43,8 +51,31 @@ foreach(def ${SIMINT_CONFIG_DEFINES})
               "#define ${def}\n")
 endforeach()
 
-install(FILES ${CMAKE_BINARY_DIR}/stage/simint/vectorization/vector_config.h DESTINATION include/simint/vectorization)
+install(FILES ${CMAKE_BINARY_DIR}/stage/simint/vectorization/vector_config.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/simint/vectorization)
 
+# <<<  Export Config  >>>
+include(GNUInstallDirs)
+include(custom_static_library)
+include(CMakePackageConfigHelpers)
+
+set(PN ${PROJECT_NAME})
+
+    # GNUInstallDirs "DATADIR" wrong here; CMake search path wants "share".
+set(CMAKECONFIG_INSTALL_DIR "share/cmake/${PN}")
+
+configure_package_config_file(cmake/${PN}Config.cmake.in
+                              "${CMAKE_CURRENT_BINARY_DIR}/${PN}Config.cmake"
+                              INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR})
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PN}ConfigVersion.cmake
+                                 VERSION ${${PN}_VERSION}
+                                 COMPATIBILITY AnyNewerVersion)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PN}Config.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/${PN}ConfigVersion.cmake
+        DESTINATION ${CMAKECONFIG_INSTALL_DIR})
+install(EXPORT "${PN}Targets"
+        NAMESPACE "${PN}::"
+        DESTINATION ${CMAKECONFIG_INSTALL_DIR})
 
 # Main code subdirectory
 add_subdirectory(simint)

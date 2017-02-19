@@ -31,8 +31,25 @@ add_library(simint ${SIMINT_LIBRARY_TYPE} ${SIMINT_LIBRARY_FILES})
 target_include_directories(simint PRIVATE ${SIMINT_C_INCLUDES})
 target_compile_options(simint PRIVATE ${SIMINT_C_FLAGS})
 target_link_libraries(simint PRIVATE ${SIMINT_C_LINK_FLAGS})
+set_target_properties(simint PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_FPIC})
+if(${BUILD_SHARED_LIBS})
+    target_link_libraries(simint PRIVATE ${LIBC_INTERJECT})
 
-install(TARGETS simint ARCHIVE DESTINATION lib
-                       LIBRARY DESTINATION lib)
+    if(APPLE)
+        set_target_properties(simint PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+    endif()
+endif()
 
-install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" DESTINATION include FILES_MATCHING PATTERN "*.h")
+target_compile_definitions(simint INTERFACE USING_${PN})
+target_include_directories(simint INTERFACE
+                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+install(TARGETS simint
+        EXPORT "${PN}Targets"
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.h")
+
