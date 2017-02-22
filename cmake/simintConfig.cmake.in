@@ -11,6 +11,7 @@
 #   simint_DEFINITIONS - Definitions necessary to use simint, namely USING_simint.
 #   simint_LIBRARIES - simint library to link against.
 #   simint_LIBRARY - same as LIBRARIES
+#   simint_VECTOR - vectorization level of library.
 #
 #
 # Available components: shared static ::
@@ -64,6 +65,7 @@ else()
 endif()
 set(${PN}_LIBRARIES ${${PN}_LIBRARY})
 set(${PN}_DEFINITIONS USING_${PN})
+set(${PN}_VECTOR @SIMINT_VECTOR_LOWER@)
 
 check_required_components(${PN})
 
